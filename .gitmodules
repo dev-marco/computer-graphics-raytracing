@@ -1,0 +1,3 @@
+[submodule "src/graphics"]
+	path = src/graphics
+	url = git@github.com:dev-marco/computer-graphics-graphics.git
