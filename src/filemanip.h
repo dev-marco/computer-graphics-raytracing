@@ -55,8 +55,8 @@ namespace FileManip {
         const std::vector<Light::Surface *> &surfaces
     );
 
-    void readTransform (std::istream &input, Shape::TransformedShape *shape);
-    Shape::TransformedShape *readTransformedShape (
+    void readTransform (std::istream &input, Shape::Transformed *shape);
+    Shape::Transformed *readTransformedShape (
         std::istream &input,
         const std::vector<Shape::Shape *> &shapes,
         const std::vector<Pigment::Texture *> &pigments,

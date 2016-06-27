@@ -48,6 +48,8 @@ namespace FileManip {
               >> checker_color_2[0] >> checker_color_2[1] >> checker_color_2[2]
               >> checker_size;
 
+        checker_size *= 2.0;
+
         avg_checker = Pigment::Color((checker_color_1 + checker_color_2) * 0.5);
 
         return new Pigment::Procedural([ checker_color_1, checker_color_2, avg_checker ] (const Geometry::Vec<2> &param) {
@@ -230,7 +232,7 @@ namespace FileManip {
         return new Shape::CSGTree(shape_first, operation, shape_second);
     }
 
-    void readTransform (std::istream &input, Shape::TransformedShape *shape) {
+    void readTransform (std::istream &input, Shape::Transformed *shape) {
 
         std::string type;
 
@@ -255,7 +257,7 @@ namespace FileManip {
         }
     }
 
-    Shape::TransformedShape *readTransformedShape (
+    Shape::Transformed *readTransformedShape (
         std::istream &input,
         const std::vector<Shape::Shape *> &shapes,
         const std::vector<Pigment::Texture *> &pigments,
@@ -264,19 +266,19 @@ namespace FileManip {
 
         Geometry::Vec<3> pivot;
         unsigned num_transforms;
-        Shape::TransformedShape *transformed_shape;
+        Shape::Transformed *transformed;
 
         input >> pivot >> num_transforms;
 
-        transformed_shape = new Shape::TransformedShape(nullptr, pivot);
+        transformed = new Shape::Transformed(nullptr, pivot);
 
         for (unsigned i = 0; i < num_transforms; ++i) {
-            readTransform(input, transformed_shape);
+            readTransform(input, transformed);
         }
 
-        transformed_shape->setShape(readShape(input, shapes, pigments, surfaces));
+        transformed->setShape(readShape(input, shapes, pigments, surfaces));
 
-        return transformed_shape;
+        return transformed;
     }
 
     Shape::Shape *readShape (
