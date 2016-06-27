@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <opencv2/opencv.hpp>
+#include "raytrace.h"
 #include "graphics/graphics.h"
 #include "filemanip.h"
 
@@ -53,21 +54,15 @@ int main (int argc, const char *argv[]) {
         aspect_ratio = static_cast<float_max_t>(image_width) * inv_image_height,
         scale = std::tan(camera.getFieldOfView() * 0.5);
     const Geometry::Vec<3>
-        look_at = camera.getLookAt(),
         eye_pos = camera.getPosition(),
         up_dir = camera.getUpDirection(),
-        camera_direction = (look_at - eye_pos).normalized(),
+        camera_direction = camera.getDirection(),
         camera_right = camera_direction.cross(up_dir),
         camera_up = camera_right.cross(camera_direction);
 
     std::vector<float_max_t> pixel_x_cache(image_width);
 
     cv::Mat img = cv::Mat::zeros(image_height, image_width, CV_8UC3);
-
-    float_max_t t_min, t_max;
-    Geometry::Vec<3> normal_min, normal_max;
-    Pigment::Color color_min, color_max;
-    Light::Material material_min, material_max;
 
     for (unsigned pixel_y = 0; pixel_y < image_height; ++pixel_y) {
         const float_max_t world_y = (1.0 - static_cast<float_max_t>((pixel_y << 1) + 1) * inv_image_height) * scale;
@@ -80,25 +75,10 @@ int main (int argc, const char *argv[]) {
             const Geometry::Vec<3> position =
                 pixel_x_cache[pixel_x] * camera_right + world_y * camera_up + eye_pos + camera_direction;
 
-            const Geometry::Line line(position, use_projection ? (position - eye_pos).normalized() : camera_direction);
-            float_max_t global_min = std::numeric_limits<float_max_t>::infinity();
-
-            for (const auto &shape : shapes) {
-
-                if (shape->intersectLine(line, normal_min, normal_max, color_min, color_max, material_min, material_max, t_min, t_max, true)) {
-                    if (t_min > 0.0) {
-                        if (t_min < global_min) {
-                            global_min = t_min;
-                            img.at<cv::Vec3b>(pixel_y, pixel_x) = color_min;
-                        }
-                    } else if (t_max > 0.0) {
-                        if (t_max < global_min) {
-                            global_min = t_max;
-                            img.at<cv::Vec3b>(pixel_y, pixel_x) = color_max;
-                        }
-                    }
-                }
-            }
+            img.at<cv::Vec3b>(pixel_y, pixel_x) = RayTrace::Trace(
+                Geometry::Line(position, use_projection ? (position - eye_pos).normalized() : camera_direction.normalized()),
+                shapes, ambient, lights
+            ).intervalFixed();
         }
     }
 
