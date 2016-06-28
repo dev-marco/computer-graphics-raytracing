@@ -18,7 +18,7 @@ namespace FileManip {
 
         unsigned num_lights;
         Geometry::Vec<3> ignore, position;
-        Pigment::Color color(0.0, 0.0, 0.0, 1.0);
+        Pigment::Color color(0.0, 0.0, 0.0);
         float_max_t constant, linear, quadratic;
 
         ambient[3] = 1.0;
@@ -41,7 +41,7 @@ namespace FileManip {
 
     Pigment::Procedural *makeChecker (std::istream &input) {
 
-        Pigment::Color avg_checker, checker_color_1(0.0, 0.0, 0.0, 1.0), checker_color_2(0.0, 0.0, 0.0, 1.0);
+        Pigment::Color avg_checker, checker_color_1(0.0, 0.0, 0.0), checker_color_2(0.0, 0.0, 0.0);
         float_max_t checker_size;
 
         input >> checker_color_1[0] >> checker_color_1[1] >> checker_color_1[2]
@@ -58,7 +58,8 @@ namespace FileManip {
                 s = Geometry::fract(param[0]),
                 t = Geometry::fract(param[1]);
 
-            if (Geometry::closeTo(s, 0.5) || Geometry::closeTo(t, 0.5)) {
+            if (Geometry::closeToZero(s) || Geometry::closeTo(s, 0.5) || Geometry::closeTo(s, 1.0) ||
+                Geometry::closeToZero(t) || Geometry::closeTo(t, 0.5) || Geometry::closeTo(t, 1.0)) {
                 return avg_checker;
             }
 
@@ -73,6 +74,35 @@ namespace FileManip {
         }, checker_size, checker_size);
     }
 
+
+    // return { (1 + std::sin(param[0])) * 0.5, (1.0 + std::sin(param[0])) * 0.5, (1 + std::sin(param[0])) * 0.5 };
+    Pigment::Procedural *makeMoisture (std::istream &input) {
+
+        Pigment::Color
+            moisture_color_1(0.0, 0.0, 0.0),
+            moisture_color_2(0.0, 0.0, 0.0);
+
+        Pigment::PerlinNoise noise;
+        unsigned seed;
+        float_max_t moisture_size;
+
+        input >> seed >> moisture_color_1[0] >> moisture_color_1[1] >> moisture_color_1[2]
+              >> moisture_color_2[0] >> moisture_color_2[1] >> moisture_color_2[2] >> moisture_size;
+
+        noise.shuffle(seed);
+
+        return new Pigment::Procedural([ moisture_color_1, moisture_color_2, noise ] (const Geometry::Vec<2> &param) mutable -> Pigment::Color {
+
+            float_max_t
+                s = std::fmod(param[0], 500.0) + 500.0,
+                t = std::fmod(param[1], 500.0) + 500.0,
+                value = (1.0 + std::sin((s + noise.at(s * 5.0, t * 5.0, 0.0) * 0.5) * 50.0)) * 0.5;
+
+            return value * moisture_color_1 + (-value + 1.0) * moisture_color_2;
+
+        }, moisture_size, moisture_size);
+    }
+
     Pigment::TexMap<Pigment::Bitmap> *makeTexMapBitmap (std::istream &input) {
         std::string bitmap;
         Geometry::Vec<4> P0, P1;
@@ -80,6 +110,15 @@ namespace FileManip {
         input >> bitmap >> P0 >> P1;
 
         return new Pigment::TexMap<Pigment::Bitmap>(P0, P1, bitmap);
+    }
+
+    Pigment::Bitmap *makeBitmap (std::istream &input) {
+        std::string bitmap;
+        float_max_t width, height;
+
+        input >> bitmap >> width >> height;
+
+        return new Pigment::Bitmap(bitmap, width, height);
     }
 
     void readPigments (
@@ -105,9 +144,17 @@ namespace FileManip {
 
                 pigments[i] = makeChecker(input);
 
+            } else if (pigment_type == "moisture") {
+
+                pigments[i] = makeMoisture(input);
+
             } else if (pigment_type == "texmap") {
 
                 pigments[i] = makeTexMapBitmap(input);
+
+            } else if (pigment_type == "bitmap") {
+
+                pigments[i] = makeBitmap(input);
 
             } else {
                 pigments[i] = nullptr;
@@ -216,6 +263,8 @@ namespace FileManip {
         Shape::CSGTree::Type operation;
         Shape::Shape *shape_first, *shape_second;
 
+        input >> type;
+
         if (type == "union") {
             operation = Shape::CSGTree::UNION;
         } else if (type == "intersection") {
@@ -230,6 +279,33 @@ namespace FileManip {
         shape_second = readShape(input, shapes, pigments, surfaces);
 
         return new Shape::CSGTree(shape_first, operation, shape_second);
+    }
+
+    Shape::Shape *nextUnion (
+        std::istream &input,
+        const std::vector<Shape::Shape *> &shapes,
+        const std::vector<Pigment::Texture *> &pigments,
+        const std::vector<Light::Surface *> &surfaces,
+        unsigned size
+    ) {
+        if (size > 1) {
+            return new Shape::CSGTree(readShape(input, shapes, pigments, surfaces), Shape::CSGTree::UNION, nextUnion(input, shapes, pigments, surfaces, size - 1));
+        }
+        return readShape(input, shapes, pigments, surfaces);
+    }
+
+    Shape::Shape *readUnion (
+        std::istream &input,
+        const std::vector<Shape::Shape *> &shapes,
+        const std::vector<Pigment::Texture *> &pigments,
+        const std::vector<Light::Surface *> &surfaces
+    ) {
+
+        unsigned size;
+
+        input >> size;
+
+        return nextUnion(input, shapes, pigments, surfaces, size);
     }
 
     void readTransform (std::istream &input, Shape::Transformed *shape) {
@@ -295,7 +371,8 @@ namespace FileManip {
 
         if (shape_type == "sphere") {
 
-            return readSphere(input, pigments[pigment], surfaces[surface]);
+            Shape::Shape *sphe = readSphere(input, pigments[pigment], surfaces[surface]);
+            return sphe;
 
         } else if (shape_type == "polyhedron") {
 
@@ -305,9 +382,17 @@ namespace FileManip {
 
             return readCylinder(input, pigments[pigment], surfaces[surface]);
 
+        } else if (shape_type == "box") {
+
+            return readBox(input, pigments[pigment], surfaces[surface]);
+
         } else if (shape_type == "csg_tree") {
 
             return readCSGTree(input, shapes, pigments, surfaces);
+
+        } else if (shape_type == "union") {
+
+            return readUnion(input, shapes, pigments, surfaces);
 
         } else if (shape_type == "transform") {
 
