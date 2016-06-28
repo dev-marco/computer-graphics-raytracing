@@ -1,0 +1,46 @@
+10  0  0
+0   0  0
+0   0  1
+90
+
+2
+0     0   0    1  1  1   1  0  0
+3     4  10    0  0  1   1  0  0
+
+6
+checker 1 1 1   0 0 0   1
+moisture 132321 0 0 1   1 0 0   3
+checker 0 0 0   1 1 1   12
+solid        1  1  0
+solid        0.8  0.8  0
+solid        0  0  1
+
+5
+0.1  0.1  0.8  400 0.1  0.9  1.45
+0.4  0.6  0.0    1 0    0    0
+0.4  0.6  0.7    5 0.1  0.1  1
+0.4  0.6  0.0    1 0.1  0    0
+0.4  0.6  0.0    1 0    0    0
+
+4
+
+1 1 cylinder   3 3 0   -1 7 7  0.955414013
+
+0 2 box   0 -6 3 3 -3 6
+
+0 0 transform 0 0 0
+    2
+        scale 1 2 1
+        translate 0 -3 -3
+    2 3 sphere 0 0 0    3
+
+0 0 transform 0 0 0
+    2
+        rotate -0.258819045 0 0 0.965925826
+        translate 0 8 -6
+    0 0 csg_tree subtraction
+        0 0 transform 0 0 0
+            1
+                scale 0.2 1 1
+            3 4 sphere    0 0 0    3
+        4 4 cylinder  -30 -2 0    30 -2 0 3
