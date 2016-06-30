@@ -1,11 +1,12 @@
 # Parametros alteraveis
 
 CXX = c++
-CXXFLAGS = -std=c++14 -g -Wall -Wno-missing-braces -O3
+CXXFLAGS = -std=c++14 -g -Wall -Wno-missing-braces -Ofast -fopenmp
 CXXLIBS = -lopencv_core -lopencv_imgproc -lopencv_highgui
 SRC := main.cc filemanip.cc raytrace.cc\
  graphics/geometry/vec.cc graphics/geometry/quaternion.cc graphics/geometry/intersection.cc\
  graphics/geometry/line.cc graphics/geometry/plane.cc graphics/geometry/parametric.cc\
+ graphics/geometry/poisson_disc.cc\
  graphics/shape/sphere.cc graphics/shape/box.cc graphics/shape/cylinder.cc\
  graphics/shape/polyhedron.cc graphics/shape/transformed.cc graphics/shape/csg_tree.cc
 OBJ := $(SRC:%.cc=build/%.o)
