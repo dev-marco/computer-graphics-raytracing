@@ -222,19 +222,19 @@ int main (int argc, const char *argv[]) {
         for (unsigned pixel_y = 0; pixel_y < image_height; ++pixel_y) {
             pixel_y_cache[pixel_y][i] = (1.0 - (pixel_y + deviations[i][1]) * (2.0 * inv_image_height)) * y_ratio + camera_offset;
         }
-
         for (unsigned pixel_x = 0; pixel_x < image_width; ++pixel_x) {
             pixel_x_cache[pixel_x][i] = ((pixel_x + deviations[i][0]) * (2.0 * inv_image_width) - 1.0) * x_ratio;
         }
     }
 
-    #pragma omp parallel for schedule(dynamic, 1)
+    #pragma omp parallel for schedule(dynamic, 1) collapse(2)
     for (unsigned pixel_y = 0; pixel_y < image_height; ++pixel_y) {
-        if (debug_mode) {
-            std::cout << "Line: " << pixel_y << std::endl;
-        }
         for (unsigned pixel_x = 0; pixel_x < image_width; ++pixel_x) {
             Pigment::Color accumulated(0.0, 0.0, 0.0);
+
+            if (debug_mode && pixel_x == 0) {
+                std::cout << "Line: " << pixel_y << std::endl;
+            }
 
             for (unsigned i = 0; i < size; ++i) {
 
@@ -247,7 +247,7 @@ int main (int argc, const char *argv[]) {
                 );
             }
 
-            img.at<cv::Vec3b>(pixel_y, pixel_x) = (Pigment::Color(accumulated / size)).intervalFixed();
+            img.at<cv::Vec3b>(pixel_y, pixel_x) = static_cast<Pigment::Color>(accumulated / size).intervalFixed();
         }
     }
 
