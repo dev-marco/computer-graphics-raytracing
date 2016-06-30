@@ -13,38 +13,44 @@ namespace RayTrace {
         Light::Material &material
     ) {
 
-        bool inside_min, inside_max, found = false;
+        bool best_min, inside_min, inside_max;
         float_max_t t_min, t_max;
         Geometry::Vec<3> normal_min, normal_max;
         Pigment::Color color_min, color_max;
         Light::Material material_min, material_max;
+        const Shape::Shape *best = nullptr;
 
-        for (const auto &shape : shapes) {
+        for (const Shape::Shape *shape : shapes) {
 
-            if (shape->intersectLine(line, t_min, t_max, get_info, normal_min, normal_max, inside_min, inside_max, color_min, color_max, material_min, material_max)) {
+            if (shape->intersectLine(line, t_min, t_max, false, normal_min, normal_max, inside_min, inside_max, color_min, color_max, material_min, material_max)) {
                 if (t_min > 0.0) {
                     if (t_min < distance) {
                         distance = t_min;
-                        normal = normal_min;
-                        inside = inside_min;
-                        pigment = color_min;
-                        material = material_min;
-                        found = true;
+                        best = shape;
+                        best_min = true;
                     }
                 } else if (t_max > 0.0) {
                     if (t_max < distance) {
                         distance = t_max;
-                        normal = normal_max;
-                        inside = inside_max;
-                        pigment = color_max;
-                        material = material_max;
-                        found = true;
+                        best = shape;
+                        best_min = false;
                     }
                 }
             }
         }
 
-        return found;
+        if (best != nullptr) {
+            if (get_info) {
+                if (best_min) {
+                    best->intersectLine(line, t_min, t_max, true, normal, normal_max, inside, inside_max, pigment, color_max, material, material_max);
+                } else {
+                    best->intersectLine(line, t_min, t_max, true, normal_min, normal, inside_min, inside, color_min, pigment, material_min, material);
+                }
+            }
+            return true;
+        }
+
+        return false;
     }
 
     Pigment::Color Trace (
@@ -52,9 +58,11 @@ namespace RayTrace {
         const std::vector<Shape::Shape *> &shapes,
         Pigment::Color ambient,
         const std::vector<Light::Light *> &lights,
+        const std::vector<Geometry::Vec<2>> &light_deviations,
+        const std::vector<std::pair<Geometry::Vec<2>, float_max_t>> &reflect_deviations,
+        const std::vector<std::pair<Geometry::Vec<2>, float_max_t>> &transmit_deviations,
         Pigment::Color color,
-        unsigned jumps,
-        float_max_t travelled
+        unsigned jumps
     ) {
 
         float_max_t distance = std::numeric_limits<float_max_t>::infinity();
@@ -77,8 +85,28 @@ namespace RayTrace {
             if (jumps > 0) {
 
                 if (material.getReflect() > Geometry::EPSILON) {
-                    const Geometry::Vec<3> reflect = (-2.0 * normal.dot(line.getDirection()) * normal + line.getDirection()).normalized();
-        			reflected = Trace(Geometry::Line(point + reflect * Geometry::EPSILON, reflect), shapes, ambient, lights, color, jumps - 1, travelled - distance) * material.getReflect();
+                    const Geometry::Vec<3>
+                        reflect = (-2.0 * normal.dot(line.getDirection()) * normal + line.getDirection()).normalized(),
+                        up_dir = reflect.perpendicular().normalized(),
+                        right_dir = reflect.cross(up_dir).normalized(),
+                        hit_point = point + reflect * 5.0;
+
+                    Pigment::Color reflect_accumulated(0.0, 0.0, 0.0);
+
+                    float_max_t total_weight = 0.0;
+
+                    for (const auto &deviation : reflect_deviations) {
+                        const Geometry::Vec<3> dir = ((hit_point + deviation.first[0] * right_dir + deviation.first[1] * up_dir) - point).normalized();
+        			    reflect_accumulated += Trace(
+                            Geometry::Line(point + dir * Geometry::EPSILON, dir),
+                            shapes, ambient, lights,
+                            light_deviations, reflect_deviations, transmit_deviations,
+                            color, jumps - 1
+                        ) * deviation.second;
+                        total_weight += deviation.second;
+                    }
+
+                    reflected += (reflect_accumulated / total_weight) * material.getReflect();
                 }
 
                 if (material.getTransmit() > Geometry::EPSILON) {
@@ -87,8 +115,28 @@ namespace RayTrace {
                         ndl = normal.dot(-line.getDirection()),
                         root = 1.0 - (nr * nr) * (1.0 - (ndl * ndl));
                     if (root >= 0.0) {
-                        const Geometry::Vec<3> transmit = ((nr * ndl - std::sqrt(root)) * normal - nr * (-line.getDirection())).normalized();
-                        transmitted = Trace(Geometry::Line(point + transmit * Geometry::EPSILON, transmit), shapes, ambient, lights, color, jumps - 1, travelled - distance) * material.getTransmit();
+                        const Geometry::Vec<3>
+                            transmit = ((nr * ndl - std::sqrt(root)) * normal - nr * (-line.getDirection())).normalized(),
+                            up_dir = transmit.perpendicular().normalized(),
+                            right_dir = transmit.cross(up_dir).normalized(),
+                            hit_point = point + transmit * 5.0;
+
+                        Pigment::Color transmit_accumulated(0.0, 0.0, 0.0);
+
+                        float_max_t total_weight = 0.0;
+
+                        for (const auto &deviation : transmit_deviations) {
+                            const Geometry::Vec<3> dir = ((hit_point + deviation.first[0] * right_dir + deviation.first[1] * up_dir) - point).normalized();
+            			    transmit_accumulated += Trace(
+                                Geometry::Line(point + dir * Geometry::EPSILON, dir),
+                                shapes, ambient, lights,
+                                light_deviations, reflect_deviations, transmit_deviations,
+                                color, jumps - 1
+                            ) * deviation.second;
+                            total_weight += deviation.second;
+                        }
+
+                        transmitted += (transmit_accumulated / total_weight) * material.getTransmit();
                     }
                 }
             }
@@ -103,32 +151,52 @@ namespace RayTrace {
                     static Light::Material material_ignore;
                     bool inside_ignore;
 
+                    Pigment::Color light_accumulated(0.0, 0.0, 0.0);
+
                     const Geometry::Vec<3> delta = light->getPosition() - point;
                     const float_max_t light_distance = delta.length();
-                    const Geometry::Vec<3> direction = delta / light_distance;
-                    float_max_t obstacle_distance = light_distance;
+                    const Geometry::Vec<3>
+                        direction = delta / light_distance,
+                        up_dir = direction.perpendicular().normalized(),
+                        right_dir = direction.cross(up_dir).normalized();
 
-                    bool collides = Collision(Geometry::Line(point + direction * Geometry::EPSILON, direction), shapes, obstacle_distance, false, normal_ignore, inside_ignore, pigment_ignore, material_ignore);
+                    for (const auto &deviation : light_deviations) {
+                        const Geometry::Vec<3> dir = ((light->getPosition() + deviation[0] * right_dir + deviation[1] * up_dir) - point).normalized();
 
-                    if (!collides) {
-                        const Geometry::Vec<3> h = ((direction - line.getDirection()) / 2).normalized();
-                        const float_max_t attenuation = 1.0 / (
-                            light->getConstantAttenuation() +
-                            light_distance * light->getLinearAttenuation() +
-                            light_distance * light_distance * light->getQuadraticAttenuation()
+                        float_max_t obstacle_distance = light_distance;
+
+                        bool collides = Collision(
+                            Geometry::Line(point + dir * Geometry::EPSILON, dir),
+                            shapes,
+                            obstacle_distance,
+                            false,
+                            normal_ignore,
+                            inside_ignore,
+                            pigment_ignore,
+                            material_ignore
                         );
 
-                        Pigment::Color
-                            diffuse = pigment * std::max(normal.dot(direction), 0.0) * material.getDiffuse() * light->getColor(),
-                            specular = std::pow(normal.dot(h), material.getAlpha()) * material.getSpecular() * light->getColor();
+                        if (!collides) {
+                            const Geometry::Vec<3> h = ((dir - line.getDirection()) / 2).normalized();
+                            const float_max_t attenuation = 1.0 / (
+                                light->getConstantAttenuation() +
+                                light_distance * light->getLinearAttenuation() +
+                                light_distance * light_distance * light->getQuadraticAttenuation()
+                            );
 
-                        accumulated += (diffuse + specular) * attenuation;
+                            Pigment::Color
+                                diffuse = (std::max(normal.dot(dir), 0.0) * material.getDiffuse()) * pigment * light->getColor(),
+                                specular = (std::pow(normal.dot(h), material.getAlpha()) * material.getSpecular()) * light->getColor();
+
+                            light_accumulated += (diffuse + specular) * attenuation;
+                        }
                     }
+
+                    accumulated += light_accumulated / light_deviations.size();
                 }
             }
 
             color = reflected + ambient + accumulated + transmitted;
-
 
         }
 
