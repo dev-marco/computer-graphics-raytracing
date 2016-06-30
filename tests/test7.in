@@ -41,6 +41,6 @@ solid        0  0  1
     0 0 csg_tree subtraction
         0 0 transform 0 0 0
             1
-                scale 0.2 1 1
+                scale 0.1 1 1
             3 4 sphere    0 0 0    3
         4 4 cylinder  -30 -2 0    30 -2 0 3
