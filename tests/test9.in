@@ -1,0 +1,148 @@
+20.0 0.0 10.0
+0.0 0.0 0.0
+0.0 0.0 1.0
+90.0
+
+2
+0.0 0.0 0.0   1.0 1.0 1.0   0.0 0.0 0.0
+10.0 10.0 10.0   1.0 1.0 1.0   1.0 0.1 0.0
+
+8
+solid 1.0 0.0 0.0
+solid 0.0 0.0 0.0
+solid 1.0 1.0 1.0
+
+solid 0.5 0.0 1.0
+solid 1.0 0.0 1.0
+
+bitmap grass.png 50.0 50.0
+bitmap sky.png 670.0 900.0
+solid 0.0 0.5 1.0
+
+6
+0.5  0.5  1.0   100.0   0.3  0.0  0.0
+0.5  1.0  0.0   100.0   0.0  0.0  0.0
+0.5  0.5  0.0   100.0   0.2  0.0  0.0
+
+1.0  0.0  0.0   100.0   0.0  0.0  0.0
+0.5  1.0  0.0   100.0   0.0  0.0  0.0
+1.0  0.0  0.0   100.0   0.0  0.0  0.0
+
+4
+
+5 4 polyhedron 1
+    0.0 0.0 1.0   0.0
+
+7 5 polyhedron 1
+    0.0 0.0 -1.0   500.0
+
+0 0 transform 0 0 0
+    4
+        rotate 0.0871557427 0 0 0.996194698
+        rotate 0 -0.0871557427 0 0.996194698
+        rotate 0 0 0.258819045 0.965925826
+        translate 5.0 -10.0 5.0
+    0 0 union 5
+        0 0 csg_tree subtraction
+            0 0 csg_tree subtraction
+                0 0 sphere 0.0 0.0 0.0   5.0
+                0 0 box -10.0 -10.0 -10.0    10.0 10.0 0.3
+            0 0 cylinder 0.0 0.0 0.0    5.0 0.0 0.0   1.0
+
+        0 0 csg_tree subtraction
+            0 0 csg_tree subtraction
+                2 0 sphere 0.0 0.0 0.0   5.0
+                2 0 box -5.0 -5.0 -0.3   5.0 5.0 5.0
+            2 0 cylinder 0.0 0.0 0.0   5.0 0.0 0.0   1.0
+
+        2 2 cylinder 0.0 0.0 0.0 4.8 0.0 0.0 0.65
+
+        2 2 cylinder 0.0 0.0 0.0 5.0 0.0 0.0 0.4
+
+        1 1 sphere 0.0 0.0 0.0   4.7
+
+0 0 transform 0 0 0
+    3
+        rotate 0 -0.0871557427 0 0.996194698
+        rotate 0 0 -0.258819045 0.965925826
+        translate -4.0 5.0 5.0
+    0 0 union 5
+        0 0 csg_tree subtraction
+            0 0 csg_tree subtraction
+
+                0 0 union 3
+
+                    3 0 sphere 0.0 0.0 0.0   5.0
+                    0 0 union 2
+                        0 0 csg_tree intersection
+                            0 0 cylinder 0.0 0.0 0.0 5.0 5.0 5.0 2.0
+                            4 0 sphere 0.0 0.0 0.0   5.0
+                        0 0 csg_tree intersection
+                            0 0 cylinder 0.0 0.0 0.0 5.0 -5.0 5.0 2.0
+                            4 0 sphere 0.0 0.0 0.0   5.0
+
+                    0 0 transform 0.0 0.0 0.0
+                        1
+                            rotate 0.0 -0.130526192 0.0 0.991444861
+                        0 0 csg_tree intersection
+                            2 1 sphere 0.0 0.0 0.0 5.01
+                            0 0 transform 0.0 0.0 0.0
+                            3
+                                scale 5.0 0.45 0.75
+                                rotate 1 0 0 0
+                                translate 5.0 0.5 0.5
+                            0 0 union 3
+                                0 0 transform 0.0 0.0 0.0
+                                2
+                                    rotate -0.866025404 0 0 0.4
+                                    translate 0.0 0.5 0.0
+                                2 1 box -1.0 -1.1 0.0   0.0 1.0 0.5
+
+                                0 0 csg_tree subtraction
+                                    0 0 transform 0.0 0.0 0.0
+                                    1
+                                        rotate 0.866025404 0 0 0.5
+                                    2 1 box -1.0 -1.0 0.0   0.0 1.0 0.5
+
+                                    0 0 transform 0.0 0.0 0.0
+                                    2
+                                        rotate -0.866025404 0 0 0.4
+                                        translate 0.0 0.5 0.0
+                                    2 1 box -2.0 -1.0 0.0   1.0 1.0 1.0
+
+                                0 0 transform 0.0 0.0 0.0
+                                1
+                                    translate 0.0 1.8 0.0
+                                0 0 union 2
+                                    0 0 transform 0.0 0.0 0.0
+                                    2
+                                        rotate -0.866025404 0 0 0.4
+                                        translate 0.0 0.5 0.0
+                                    2 1 box -1.0 -1.2 0.0   0.0 1.0 0.5
+
+                                    0 0 csg_tree subtraction
+                                        0 0 transform 0.0 0.0 0.0
+                                        1
+                                            rotate 0.866025404 0 0 0.5
+                                        2 1 box -1.0 -1.0 0.0   0.0 1.0 0.5
+
+                                        0 0 transform 0.0 0.0 0.0
+                                        2
+                                            rotate -0.866025404 0 0 0.4
+                                            translate 0.0 0.5 0.0
+                                        2 1 box -2.0 -1.0 0.0   1.0 1.0 1.0
+
+                3 0 box -10.0 -10.0 -10.0    10.0 10.0 0.3
+            3 0 cylinder 0.0 0.0 0.0    5.0 0.0 0.0   1.0
+
+        0 0 csg_tree subtraction
+            0 0 csg_tree subtraction
+                2 0 sphere 0.0 0.0 0.0   5.0
+                2 0 box -5.0 -5.0 -0.3   5.0 5.0 5.0
+            2 0 cylinder 0.0 0.0 0.0   5.0 0.0 0.0   1.0
+
+        2 2 cylinder 0.0 0.0 0.0 4.8 0.0 0.0 0.65
+
+        2 2 cylinder 0.0 0.0 0.0 5.0 0.0 0.0 0.4
+
+        1 1 sphere 0.0 0.0 0.0   4.7
