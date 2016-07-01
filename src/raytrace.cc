@@ -178,17 +178,16 @@ namespace RayTrace {
 
                         if (!collides) {
                             const Geometry::Vec<3> h = ((dir - line.getDirection()) / 2).normalized();
-                            const float_max_t attenuation = 1.0 / (
-                                light->getConstantAttenuation() +
-                                light_distance * light->getLinearAttenuation() +
-                                light_distance * light_distance * light->getQuadraticAttenuation()
-                            );
+                            const float_max_t
+                                attenuation = 1.0 / (
+                                    light->getConstantAttenuation() +
+                                    light_distance * light->getLinearAttenuation() +
+                                    light_distance * light_distance * light->getQuadraticAttenuation()
+                                ),
+                                diffuse = std::max(normal.dot(dir), 0.0) * material.getDiffuse(),
+                                specular = std::pow(normal.dot(h), material.getAlpha()) * material.getSpecular();
 
-                            Pigment::Color
-                                diffuse = (std::max(normal.dot(dir), 0.0) * material.getDiffuse()) * pigment * light->getColor(),
-                                specular = (std::pow(normal.dot(h), material.getAlpha()) * material.getSpecular()) * light->getColor();
-
-                            light_accumulated += (diffuse + specular) * attenuation;
+                            light_accumulated += ((diffuse * pigment) + specular) * light->getColor() * attenuation;
                         }
                     }
 
