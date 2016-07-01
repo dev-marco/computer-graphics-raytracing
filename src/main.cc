@@ -16,7 +16,7 @@ int main (int argc, const char *argv[]) {
     std::vector<Pigment::Texture *> pigments;
     std::vector<Light::Surface *> surfaces;
     std::vector<Shape::Shape *> shapes;
-    std::string input_file, output_file, texture_dir;
+    std::string input_file, texture_dir, output_file = "output.png";
 
     bool
         use_poisson = false,
