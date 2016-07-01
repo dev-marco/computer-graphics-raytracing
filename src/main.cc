@@ -1,4 +1,5 @@
 #include <memory>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -16,7 +17,8 @@ int main (int argc, const char *argv[]) {
     std::vector<Pigment::Texture *> pigments;
     std::vector<Light::Surface *> surfaces;
     std::vector<Shape::Shape *> shapes;
-    std::string input_file, texture_dir, output_file = "output.png";
+    std::string input_file, texture_dir = "./", output_file = "output.png";
+    auto start_time = std::chrono::high_resolution_clock::now();
 
     bool
         use_poisson = false,
@@ -101,6 +103,13 @@ int main (int argc, const char *argv[]) {
             if (!value.empty()) {
                 recursion_levels = std::stoi(value);
             }
+        } else if (arg == "--texture-dir") {
+            if (!value.empty()) {
+                texture_dir = value;
+                if (texture_dir.back() != '/') {
+                    texture_dir += '/';
+                }
+            }
         } else if (arg == "--debug") {
             debug_mode = true;
         } else {
@@ -115,6 +124,7 @@ int main (int argc, const char *argv[]) {
             << "OPTIONS:" << std::endl
             << "--width=WID        : Resulting image width in pixels. Default: WID = 800" << std::endl
             << "--height=HEI       : Resulting image height in pixels. Default: HEI = 600" << std::endl
+            << "--texture-dir=DIR  : Sets the directory from which to load textures. Default: DIR = \"./\"" << std::endl
             << "--poison=POI       : Minimum distance between ray samples (anti-aliasing). Disables super-sampling. Default: POI = 0.4" << std::endl
             << "--super-sample=SS  : Square root of ray amount samples to take (anti-aliasing). Disables poisson. Default: SS = 2" << std::endl
             << "--light-rays=LR    : Square root of rays amount to cast in lights, excluding the central (distributed ray-tracing). Default: LR = 4" << std::endl
@@ -127,7 +137,7 @@ int main (int argc, const char *argv[]) {
         return 1;
     }
 
-    FileManip::readFile(input_file, camera, ambient, lights, pigments, surfaces, shapes);
+    FileManip::readFile(input_file, texture_dir, camera, ambient, lights, pigments, surfaces, shapes);
 
     constexpr float_max_t
         reflect_side = 1.0,
@@ -252,6 +262,10 @@ int main (int argc, const char *argv[]) {
     }
 
     cv::imwrite(output_file, img);
+
+    std::cout << "Operation took " << std::chrono::duration_cast<std::chrono::duration<float_max_t>>(
+        std::chrono::high_resolution_clock::now() - start_time
+    ).count() << " seconds." << std::endl;
 
     return 0;
 }

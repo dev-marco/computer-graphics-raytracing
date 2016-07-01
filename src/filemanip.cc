@@ -103,26 +103,27 @@ namespace FileManip {
         }, moisture_size, moisture_size);
     }
 
-    Pigment::TexMap<Pigment::Bitmap> *makeTexMapBitmap (std::istream &input) {
+    Pigment::TexMap<Pigment::Bitmap> *makeTexMapBitmap (std::istream &input, const std::string &texture_dir) {
         std::string bitmap;
         Geometry::Vec<4> P0, P1;
 
         input >> bitmap >> P0 >> P1;
 
-        return new Pigment::TexMap<Pigment::Bitmap>(P0, P1, bitmap);
+        return new Pigment::TexMap<Pigment::Bitmap>(P0, P1, texture_dir + bitmap);
     }
 
-    Pigment::Bitmap *makeBitmap (std::istream &input) {
+    Pigment::Bitmap *makeBitmap (std::istream &input, const std::string &texture_dir) {
         std::string bitmap;
         float_max_t width, height;
 
         input >> bitmap >> width >> height;
 
-        return new Pigment::Bitmap(bitmap, width, height);
+        return new Pigment::Bitmap(texture_dir + bitmap, width, height);
     }
 
     void readPigments (
         std::istream &input,
+        const std::string &texture_dir,
         std::vector<Pigment::Texture *> &pigments
     ) {
 
@@ -150,11 +151,11 @@ namespace FileManip {
 
             } else if (pigment_type == "texmap") {
 
-                pigments[i] = makeTexMapBitmap(input);
+                pigments[i] = makeTexMapBitmap(input, texture_dir);
 
             } else if (pigment_type == "bitmap") {
 
-                pigments[i] = makeBitmap(input);
+                pigments[i] = makeBitmap(input, texture_dir);
 
             } else {
                 pigments[i] = nullptr;
@@ -423,6 +424,7 @@ namespace FileManip {
 
     bool readFile (
         const std::string &name,
+        const std::string &texture_dir,
         Geometry::Camera &camera,
         Pigment::Color &ambient,
         std::vector<Light::Light *> &lights,
@@ -435,7 +437,7 @@ namespace FileManip {
 
             camera = readCamera(input);
             readLights(input, ambient, lights);
-            readPigments(input, pigments);
+            readPigments(input, texture_dir, pigments);
             readSurfaces(input, surfaces);
             readShapes(input, shapes, pigments, surfaces);
 

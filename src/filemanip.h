@@ -25,10 +25,11 @@ namespace FileManip {
 
     void readLights (std::istream &input, Pigment::Color &ambient, std::vector<Light::Light *> &lights);
 
-    void readPigments (std::istream &input, std::vector<Pigment::Texture *> &pigments);
+    void readPigments (std::istream &input, const std::string &texture_dir, std::vector<Pigment::Texture *> &pigments);
     Pigment::Solid *makeSolid (std::istream &input);
     Pigment::Procedural *makeChecker (std::istream &input);
-    Pigment::TexMap<Pigment::Bitmap> *makeTexMapBitmap (std::istream &input);
+    Pigment::TexMap<Pigment::Bitmap> *makeTexMapBitmap (std::istream &input, const std::string &texture_dir);
+    Pigment::Bitmap *makeBitmap (std::istream &input, const std::string &texture_dir);
 
     void readSurfaces (std::istream &input, std::vector<Light::Surface *> &surfaces);
 
@@ -65,6 +66,7 @@ namespace FileManip {
 
     bool readFile (
         const std::string &name,
+        const std::string &texture_dir,
         Geometry::Camera &camera,
         Pigment::Color &ambient,
         std::vector<Light::Light *> &lights,
