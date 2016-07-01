@@ -20,7 +20,7 @@ int main (int argc, const char *argv[]) {
 
     bool
         use_poisson = false,
-        use_oversampling = false,
+        use_super_sampling = false,
         use_orthogonal = false,
         use_light_distr = false,
         use_reflect_distr = false,
@@ -65,12 +65,12 @@ int main (int argc, const char *argv[]) {
             }
         } else if (arg == "--poisson") {
             use_poisson = true;
-            use_oversampling = false;
+            use_super_sampling = false;
             if (!value.empty()) {
                 poisson_distance = std::stod(value);
             }
-        } else if (arg == "--oversample") {
-            use_oversampling = true;
+        } else if (arg == "--super-sample") {
+            use_super_sampling = true;
             use_poisson = false;
             if (!value.empty()) {
                 over_samples = std::stoi(value);
@@ -115,8 +115,8 @@ int main (int argc, const char *argv[]) {
             << "OPTIONS:" << std::endl
             << "--width=WID        : Resulting image width in pixels. Default: WID = 800" << std::endl
             << "--height=HEI       : Resulting image height in pixels. Default: HEI = 600" << std::endl
-            << "--poison=POI       : Minimum distance between ray samples (anti-aliasing). Disables oversample. Default: POI = 0.4" << std::endl
-            << "--oversample=AA    : Square root of ray amount samples to take (anti-aliasing). Disables poisson. Default: AA = 2" << std::endl
+            << "--poison=POI       : Minimum distance between ray samples (anti-aliasing). Disables super-sampling. Default: POI = 0.4" << std::endl
+            << "--super-sample=SS  : Square root of ray amount samples to take (anti-aliasing). Disables poisson. Default: SS = 2" << std::endl
             << "--light-rays=LR    : Square root of rays amount to cast in lights, excluding the central (distributed ray-tracing). Default: LR = 4" << std::endl
             << "--light-area=LA    : Area of every light. Enables light rays. Default: LA = 1.0" << std::endl
             << "--reflect-rays=RR  : Square root of rays amount to cast after reflection, excluding the central (distributed ray-tracing). Default: RR = 2" << std::endl
@@ -200,7 +200,7 @@ int main (int argc, const char *argv[]) {
     if (use_poisson) {
         Geometry::PoissonDisc poisson(poisson_distance);
         deviations = poisson.allPoints();
-    } else if (use_oversampling) {
+    } else if (use_super_sampling) {
         float_max_t step = 1.0 / over_samples;
         for (unsigned i = 0; i < over_samples; ++i) {
             float_max_t y_samples = step * i;
