@@ -1,8 +1,8 @@
 # Parametros alteraveis
 
-CXX = c++
-CXXFLAGS = -std=c++14 -g -Wall -Wno-missing-braces -Ofast -fopenmp
-CXXLIBS = -lopencv_core -lopencv_imgproc -lopencv_highgui
+CXX := g++
+CXXFLAGS := -std=c++14 -g -Wall -Wno-missing-braces -Ofast -fopenmp
+CXXLIBS := -lopencv_core -lopencv_imgproc -lopencv_highgui
 SRC := main.cc filemanip.cc raytrace.cc\
  graphics/geometry/vec.cc graphics/geometry/quaternion.cc graphics/geometry/intersection.cc\
  graphics/geometry/line.cc graphics/geometry/plane.cc graphics/geometry/parametric.cc\
@@ -11,7 +11,7 @@ SRC := main.cc filemanip.cc raytrace.cc\
  graphics/shape/polyhedron.cc graphics/shape/transformed.cc graphics/shape/csg_tree.cc
 OBJ := $(SRC:%.cc=build/%.o)
 DEP := $(SRC:%.cc=deps/%.d)
-NAME = raytracing
+NAME := raytracing
 
 # Fim dos parametros
 
